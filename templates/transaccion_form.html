@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Registrar Transacción Financiera</h4>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('nueva_transaccion') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="tipo_movimiento" class="form-label">Tipo de Movimiento</label>
+                        <select class="form-select" id="tipo_movimiento" name="tipo_movimiento" required>
+                            <option value="INGRESO">INGRESO (+)</option>
+                            <option value="EGRESO">EGRESO (-)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_categoria" class="form-label">Categoría</label>
+                        <select class="form-select" id="id_categoria" name="id_categoria" required>
+                            {% for cat in categorias %}
+                                <option value="{{ cat.id_categoria }}">{{ cat.nombre_categoria }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto ($)</label>
+                        <input type="number" step="0.01" min="0.01" class="form-control" id="monto" name="monto" placeholder="0.00" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="concepto" class="form-label">Concepto / Descripción</label>
+                        <textarea class="form-control" id="concepto" name="concepto" rows="2" required placeholder="Detalle del movimiento..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="numero_comprobante" class="form-label">N° Comprobante:</label>
+                        <input type="text" 
+                            id="numero_comprobante" 
+                            name="numero_comprobante" 
+                            value="{{ numero_comprobante }}" 
+                            class="form-control" 
+                            readonly>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-success">Guardar Movimiento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

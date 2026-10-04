@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Panel de Control - Caja Chica</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if caja %}
+            <a href="{{ url_for('nueva_transaccion') }}" class="btn btn-success"><i class="bi bi-plus-circle me-1"></i> Registrar Movimiento</a>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCierre"><i class="bi bi-lock me-1"></i> Cerrar Caja</button>
+        {% endif %}
+    </div>
+</div>
+
+{% if not caja %}
+    <div class="card card-body text-center shadow-sm py-5 mb-4">
+        <h4 class="text-muted mb-3">No hay una caja abierta actualmente.</h4>
+        <form action="{{ url_for('abrir_caja') }}" method="POST" class="row g-2 justify-content-center">
+            <div class="col-auto">
+                <input type="number" step="0.01" class="form-control" name="monto_inicial" placeholder="Monto Inicial ($)" required>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-door-open me-1"></i> Abrir Caja</button>
+            </div>
+        </form>
+    </div>
+{% else %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white shadow-sm">
+                <div class="card-body">
+                    <h6>Monto Inicial</h6>
+                    <h3>${{ "%.2f"|format(caja.monto_inicial) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h6>Total Ingresos</h6>
+                    <h3>+${{ "%.2f"|format(total_ingresos) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <h6>Total Egresos</h6>
+                    <h3>-${{ "%.2f"|format(total_egresos) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <h6>Saldo en Caja</h6>
+                    <h3>${{ "%.2f"|format(saldo_caja) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Transacciones -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Movimientos de la Caja Activa (#{{ caja.id_caja }})</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Fecha / Hora</th>
+                        <th>Tipo</th>
+                        <th>Categoría</th>
+                        <th>Concepto</th>
+                        <th>Comprobante</th>
+                        <th>Usuario</th>
+                        <th class="text-end">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transacciones %}
+                    <tr>
+                        <td>{{ t.fecha_hora }}</td>
+                        <td>
+                            <span class="badge {{ 'bg-success' if t.tipo_movimiento == 'INGRESO' else 'bg-danger' }}">
+                                {{ t.tipo_movimiento }}
+                            </span>
+                        </td>
+                        <td>{{ t.nombre_categoria }}</td>
+                        <td>{{ t.concepto }}</td>
+                        <td>{{ t.numero_comprobante or '-' }}</td>
+                        <td>{{ t.nombres }}</td>
+                        <td class="text-end fw-bold {{ 'text-success' if t.tipo_movimiento == 'INGRESO' else 'text-danger' }}">
+                            {{ '+' if t.tipo_movimiento == 'INGRESO' else '-' }}${{ "%.2f"|format(t.monto) }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('imprimir_comprobante', id_transaccion=t.id_transaccion) }}" 
+                            target="_blank" 
+                            class="btn btn-sm btn-outline-primary">
+                                🖨️ Imprimir
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-3">No hay movimientos registrados en esta caja.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para Cierre de Caja -->
+    <div class="modal fade" id="modalCierre" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ url_for('cerrar_caja') }}" method="POST">
+                    <input type="hidden" name="id_caja" value="{{ caja.id_caja }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cierre de Caja Chica</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Monto Teórico Esperado:</strong> ${{ "%.2f"|format(saldo_caja) }}</p>
+                        <div class="mb-3">
+                            <label for="monto_real" class="form-label">Monto Real en Arqueo ($)</label>
+                            <input type="number" step="0.01" class="form-control" name="monto_real" required placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Confirmar Cierre</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
